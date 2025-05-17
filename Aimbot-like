@@ -3,16 +3,17 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
+local Character = LocalPlayer.Character
+local Humanoid = Character and Character:FindFirstChild("Humanoid")
 
 local isToggleEnabled = false
-local isTrackingActive = false
+local isMovingActive = false
 local connection
 
 local function findNearestPlayer()
     local closestPlayer = nil
     local closestDistance = math.huge
-    local localPosition = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
+    local localPosition = Character and Character:FindFirstChild("HumanoidRootPart") and Character.HumanoidRootPart.Position
 
     if not localPosition then
         return nil
@@ -32,26 +33,26 @@ local function findNearestPlayer()
     return closestPlayer
 end
 
-local function updateMouseHit()
-    if not isTrackingActive then return end
+local function moveToNearest()
+    if not isMovingActive then return end
 
     local nearestPlayer = findNearestPlayer()
-    if nearestPlayer and nearestPlayer.Character and nearestPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    if nearestPlayer and nearestPlayer.Character and nearestPlayer.Character:FindFirstChild("HumanoidRootPart") and Humanoid then
         local hrpPosition = nearestPlayer.Character.HumanoidRootPart.Position
-        Mouse.Hit = CFrame.new(hrpPosition)
+        Humanoid:MoveTo(hrpPosition)
     end
 end
 
-local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/KrutoiC4elovek/NEW-LIB/refs/heads/main/NEW-LIB"))()
-local Window = Kavo.CreateLib("Aimbot like moving", "RJTheme1")
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Kavo.CreateLib("Character Mover", "RJTheme1")
 
 local MainTab = Window:NewTab("Main")
-local MainSection = MainTab:NewSection("Prekolu")
+local MainSection = MainTab:NewSection("Movement Controls")
 
-MainSection:NewToggle("Enable aimbot like moving", "Enables/Disables mouse hit tracking on Ctrl press", function(state)
+MainSection:NewToggle("Aimbot like", "Enables/Disables movement to nearest player on Ctrl press", function(state)
     isToggleEnabled = state
-    if not isToggleEnabled and isTrackingActive then
-        isTrackingActive = false
+    if not isToggleEnabled and isMovingActive then
+        isMovingActive = false
         if connection then
             connection:Disconnect()
             connection = nil
@@ -62,10 +63,10 @@ end)
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then return end
     if input.KeyCode == Enum.KeyCode.LeftControl and isToggleEnabled then
-        isTrackingActive = not isTrackingActive
-        if isTrackingActive and not connection then
-            connection = RunService.Heartbeat:Connect(updateMouseHit)
-        elseif not isTrackingActive and connection then
+        isMovingActive = not isMovingActive
+        if isMovingActive and not connection then
+            connection = RunService.Heartbeat:Connect(moveToNearest)
+        elseif not isMovingActive and connection then
             connection:Disconnect()
             connection = nil
         end

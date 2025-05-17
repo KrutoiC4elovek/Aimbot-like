@@ -1,0 +1,73 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+local isToggleEnabled = false
+local isTrackingActive = false
+local connection
+
+local function findNearestPlayer()
+    local closestPlayer = nil
+    local closestDistance = math.huge
+    local localPosition = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
+
+    if not localPosition then
+        return nil
+    end
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = player.Character.HumanoidRootPart
+            local distance = (localPosition - hrp.Position).Magnitude
+            if distance < closestDistance then
+                closestDistance = distance
+                closestPlayer = player
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local function updateMouseHit()
+    if not isTrackingActive then return end
+
+    local nearestPlayer = findNearestPlayer()
+    if nearestPlayer and nearestPlayer.Character and nearestPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrpPosition = nearestPlayer.Character.HumanoidRootPart.Position
+        Mouse.Hit = CFrame.new(hrpPosition)
+    end
+end
+
+local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/KrutoiC4elovek/NEW-LIB/refs/heads/main/NEW-LIB"))()
+local Window = Kavo.CreateLib("Aimbot like moving", "RJTheme1")
+
+local MainTab = Window:NewTab("Main")
+local MainSection = MainTab:NewSection("Prekolu")
+
+MainSection:NewToggle("Enable aimbot like moving", "Enables/Disables mouse hit tracking on Ctrl press", function(state)
+    isToggleEnabled = state
+    if not isToggleEnabled and isTrackingActive then
+        isTrackingActive = false
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl and isToggleEnabled then
+        isTrackingActive = not isTrackingActive
+        if isTrackingActive and not connection then
+            connection = RunService.Heartbeat:Connect(updateMouseHit)
+        elseif not isTrackingActive and connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end)
